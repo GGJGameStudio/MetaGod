@@ -13,7 +13,7 @@ export class Player {
     canUseElevation() { get: { return this.elevationLastUseTime > Var.Variables.elevationCoolDown; } }
     canUseWhirlwind() { get: { return this.whirlwindLastUseTime > Var.Variables.whirlwindCoolDown; } }
 
-    constructor(id: string, public username: string) {
+    constructor(public id: string, public username: string) {
         this.faithScore = Var.Variables.defaultFaith;
         this.isMeta = false;
         this.humidityLastUseTime = 0;

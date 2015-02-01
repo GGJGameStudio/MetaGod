@@ -3,11 +3,13 @@ import Pla = require('./Player');
 import Pil = require('./Pilgrim');
 import T = require('./Tiles');
 import V = require('../Utils/Variables');
+import D = require('../Utils/Dictionary');
+
 export class World {
 
     private world: M.Matrix<T.ITile>;
     pilgrims: Array<Pil.Pilgrim>;
-    players: any;
+    players: D.Dictionary<string, Pla.Player>;
     temples: Array<T.TempleTile>;
 
     private static instance: World = null;
@@ -81,7 +83,7 @@ export class World {
         }
 
         this.pilgrims = new Array();
-        this.players = {};
+        this.players = new D.Dictionary<string,Pla.Player>();
     }
 
     setTempleColor(i: number, j: number, color: number) {
@@ -98,10 +100,12 @@ export class World {
     Update(elapsed: number) {
 
         // Update players
-        var that = this;
-        Object.keys(this.players).forEach(function (player) {
-            that.getPlayer(player).update(elapsed);
-        });
+        var nbPlayer = this.players.length();
+        for (var i = 0; i < nbPlayer; i++) {
+            var player = this.players.getById(i);
+
+            player.update(elapsed);
+        }
 
         // Update tiles
         for (var i = 0; i < V.Variables.worldWidth; i++) {
@@ -137,14 +141,37 @@ export class World {
     }
 
     addPlayer(idPlayer: string, player: Pla.Player) {
-        this.players[idPlayer] = player;
+        var color = -1;
+        var end = false;
+
+        for (var i = 0; i < this.temples.length && !end; i++) {
+            var temple = this.temples[i];
+
+            if (temple.player == null && color == -1) {
+                color = temple.color;
+                temple.player = player;
+                player.color = color;
+            } else if (temple.color == color) {
+                temple.player = player;
+            }
+        }
+
+        this.players.add(idPlayer, player);
     }
 
     getPlayer(idPlayer: string) {
-        return this.players[idPlayer];
+        return this.players.getByKey(idPlayer);
     }
 
     removePlayer(idPlayer: string) {
-        delete this.players[idPlayer];
+        for (var i = 0; i < this.temples.length; i++) {
+            var temple = this.temples[i];
+
+            if (temple.player != null && temple.player.id == idPlayer) {
+                temple.player = null;
+            }
+        }
+
+        this.players.remove(idPlayer);
     }
 }

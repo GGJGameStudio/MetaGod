@@ -43,19 +43,6 @@ export class LoginCommand implements ICommand {
         var player = new P.Player(this.idPlayer, this.login);
 
         world.addPlayer(this.idPlayer, player);
-        var color = -1;
-        var end = false;
-        for (var i = 0; i < world.temples.length && !end; i++) {
-            var temple = world.temples[i];
-
-            if (temple.player == null && color == -1) {
-                color = temple.color;
-                temple.player = player;
-                player.color = color;
-            } else if (temple.color == color) {
-                temple.player = player;
-            }
-        }
     }
 
     CanRun() {

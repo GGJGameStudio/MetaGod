@@ -24,7 +24,15 @@ server_io.on('connection', function (server_socket) {
     server_socket.emit("acquittal", server_socket.id);
 
     server_socket.on('update', function (data) {
-        console.log("[SERVER] Player " + server_socket.id + " used a command :" + data.command +" with param: " + data);
+        var params = new Array();
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                params.push(key + " -> " + data[key]);
+            }
+        }
+
+        console.log("[SERVER] Player " + server_socket.id + " used a command:" + params.join(" | "));
+
         var cmd = C.getCommand(data, server_socket.id);
 
         if (cmd.CanRun())
@@ -39,19 +47,23 @@ server_io.on('connection', function (server_socket) {
 
 var lastUpdate: number = Date.now();
 var elapsed = 0;
+var elapsedSinceLastNotify = 0;
 
 // Update loop
 setInterval(function () {
 
     // Calculate elapsed time since last update
     var now = Date.now();
-
     elapsed = now - lastUpdate;
     lastUpdate = now;
+    elapsedSinceLastNotify += elapsed;
 
     // Updare model
     world.Update(elapsed);
 
     // Notify players
-    server_io.emit('status', world);
-}, V.Variables.updateRate);
+    if (elapsedSinceLastNotify >= V.Variables.clientNotifyRate) {
+        server_io.emit('status', world);
+        elapsedSinceLastNotify -= V.Variables.clientNotifyRate;
+    }
+}, V.Variables.serverUpdateRate);

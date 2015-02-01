@@ -43,6 +43,7 @@
     <TypeScriptCompile Include="Core\World.ts" />
     <TypeScriptCompile Include="Scripts\typings\node\node.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\socket.io\socket.io.d.ts" />
+    <TypeScriptCompile Include="Utils\Dictionary.ts" />
     <TypeScriptCompile Include="Utils\Matrix.ts" />
     <TypeScriptCompile Include="Utils\Randomisator.ts" />
     <TypeScriptCompile Include="Utils\Variables.ts" />
