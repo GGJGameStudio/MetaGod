@@ -231,3 +231,5 @@ npm-debug.log
 *.map
 src/MetaDieuServer/MetaDieuServer/*.js
 src/MetaDieuServer/MetaDieuServer/*/*.js
+
+src/MetaDieuClient/cache
