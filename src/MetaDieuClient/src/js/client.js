@@ -56,7 +56,7 @@ window.onload = function() {
         cameraMoveDown : false,
         currentPower : 0,
         players : {},
-        colors : { yellow:'0xffd800', blue:'0x1b1bc7 ', green: '0x11910b', orange: '0xe3810d', magenta: '0xDF98DF', cyan: '0x00bff3', purple: '0x92278f' }
+        colors : { red: '0xff4444', yellow:'0xffd800', blue:'0x1b1bc7 ', green: '0x11910b', orange: '0xe3810d', magenta: '0xDF98DF', cyan: '0x00bff3', purple: '0x92278f' }
     };
     
     var game = new Phaser.Game(client.windowWidth, client.windowHeight, Phaser.AUTO, '', { 
@@ -101,7 +101,7 @@ window.onload = function() {
         
         
         //faith score
-        var text = faithScoreText();
+        var text = "";
         var style = { font: "bold 25px Courier", fill: "#770022", align: "center" };
 
         client.scoreText = game.add.text(client.windowWidth - 400, 20, text, style);
@@ -124,17 +124,27 @@ window.onload = function() {
         socket.on('status', function(data) {
             //console.log(data);
             if (data.players !== undefined){
-                updatePlayers(data.players.jsonDictionary);
+                updatePlayers(data.players);
             }
             
-            if (data.world !== undefined){
-                updateMap(data);
+            if (data.tiles !== undefined && data.tiles[0] != null){
+                updateMap(data.tiles);
             }
             
             
             if (data.pilgrims !== undefined){
                 updatePilgrims(data.pilgrims);
             }
+        });
+        
+        
+        socket.on('init', function(data) {
+            //console.log(data);
+            initPlayers(data.players);
+            
+            initMap(data.tiles);
+            
+            initPilgrims(data.pilgrims);
         });
     }
     
@@ -146,196 +156,199 @@ window.onload = function() {
         return client.tiles[x][y].frame;
     }
     
-    function faithScoreText(players){
-        var text = "";
-        for (var player in players){
-            var maxnamelength = 15;
-            text += players[player].username;
-            var namelength = (players[player].username + "").length;
-            for(var i = namelength; i < maxnamelength ; i++) text += " ";
-            text += "  ";
-            var maxscorelength = 6;
-            var scorelength = (players[player].faithScore + "").length;
-            for(var i = scorelength; i < maxscorelength ; i++) text += " ";
-            text += players[player].faithScore;
-            text += "\n"
+    function initPilgrims(pilgrims){
+        for(var i = 0; i < pilgrims.length ; i++){
+            createPilgrim(pilgrims[i]);
         }
-        return text;
     }
     
     function updatePilgrims(pilgrims){
-        var id;
-        var pilgrim;
-        var directionx;
-        var directiony;
-        var speed;
-        var x;
-        var y;
-        var color;
+        
         for(var i = 0; i < pilgrims.length ; i++){
             pilgrim = pilgrims[i];
-            id = "" + pilgrim.id;
-            directionx = pilgrim.direction.x;
-            directiony = pilgrim.direction.y;
-            x = pilgrim.x;
-            y = pilgrim.y;
-            speed = 0.05;
-            color = pilgrim.color;
-            if (client.pilgrims[id] != null){
-                //maj
-                var sprite = client.pilgrims[id];
-                
-                if (pilgrim.life == 0){
-                    if (sprite.copain != null){
-                        sprite.copain.destroy(true);
-                        sprite.copain = null;
-                    }
-                    sprite.destroy(true);
-                    delete(client.pilgrims[id]);
-                } else {
-                
-                    switch(getDirection(directionx, directiony)){
-                        case "right" : sprite.animations.play('moveRight'); break;
-                        case "left" : sprite.animations.play('moveLeft'); break;
-                        case "down" : sprite.animations.play('moveDown'); break;
-                        case "up" : sprite.animations.play('moveUp'); break;
-                    }
-
-                    sprite.x = x;
-                    sprite.y = y;
-                    sprite.body.velocity.x = directionx * speed * 1000;
-                    sprite.body.velocity.y = directiony * speed * 1000;
-
-                    if (sprite.copain != null){
-                        sprite.copain.x = x;
-                        sprite.copain.y = y;
-                        sprite.copain.body.velocity.x = directionx * speed * 1000;
-                        sprite.copain.body.velocity.y = directiony * speed * 1000;
-
-                        switch(getDirection(directionx, directiony)){
-                            case "right" : sprite.copain.animations.play('moveRight'); break;
-                            case "left" : sprite.copain.animations.play('moveLeft'); break;
-                            case "down" : sprite.copain.animations.play('moveDown'); break;
-                            case "up" : sprite.copain.animations.play('moveUp'); break;
-                        }
-                    }
-                }
+            
+            if (client.pilgrims[pilgrim.id] != null){
+                updatePilgrim(pilgrims[i]);
                 
             } else if (pilgrim.life != 0){
-                
-                //creation
-                
-                var sprite2 = game.add.sprite(x, y, 'pilgrim2');
-                sprite2.anchor.x = 0.5;
-                sprite2.anchor.y = 0.9;
-                sprite2.animations.add('moveUp', [0,1], 2, true, true);
-                sprite2.animations.add('moveDown', [4,5], 2, true, true);
-                sprite2.animations.add('moveRight', [2,3], 2, true, true);
-                sprite2.animations.add('moveLeft', [6,7], 2, true, true);
+                createPilgrim(pilgrims[i]);
+            }
+        }
+    }
+    
+    function createPilgrim(pilgrim){
+        var id = "" + pilgrim.id;
+        var directionx = pilgrim.direction.x;
+        var directiony = pilgrim.direction.y;
+        var x = pilgrim.coordinate.x;
+        var y = pilgrim.coordinate.y;
+        var speed = pilgrim.speed;
+        var color = pilgrim.color;
+        
+        var sprite2 = game.add.sprite(x, y, 'pilgrim2');
+        sprite2.anchor.x = 0.5;
+        sprite2.anchor.y = 0.9;
+        sprite2.animations.add('moveUp', [0,1], 2, true, true);
+        sprite2.animations.add('moveDown', [4,5], 2, true, true);
+        sprite2.animations.add('moveRight', [2,3], 2, true, true);
+        sprite2.animations.add('moveLeft', [6,7], 2, true, true);
+        switch(getDirection(directionx, directiony)){
+            case "right" : sprite2.animations.play('moveRight'); break;
+            case "left" : sprite2.animations.play('moveLeft'); break;
+            case "down" : sprite2.animations.play('moveDown'); break;
+            case "up" : sprite2.animations.play('moveUp'); break;
+        }
+
+        sprite2.tint = client.colors[Object.keys(client.colors)[color]];
+        game.physics.enable(sprite2);
+        sprite2.body.velocity.x = directionx * speed * 1000;
+        sprite2.body.velocity.y = directiony * speed * 1000;
+
+
+        var sprite1 = game.add.sprite(x, y, 'pilgrim1');
+        sprite1.anchor.x = 0.5;
+        sprite1.anchor.y = 0.9;
+        sprite1.animations.add('moveUp', [0,1], 2, true, true);
+        sprite1.animations.add('moveDown', [4,5], 2, true, true);
+        sprite1.animations.add('moveRight', [2,3], 2, true, true);
+        sprite1.animations.add('moveLeft', [6,7], 2, true, true);
+        switch(getDirection(directionx, directiony)){
+            case "right" : sprite1.animations.play('moveRight'); break;
+            case "left" : sprite1.animations.play('moveLeft'); break;
+            case "down" : sprite1.animations.play('moveDown'); break;
+            case "up" : sprite1.animations.play('moveUp'); break;
+        }
+        game.physics.enable(sprite1);
+        sprite1.body.velocity.x = directionx * speed * 1000;
+        sprite1.body.velocity.y = directiony * speed * 1000;
+
+
+        client.objects.addChild(sprite2);
+        client.objects.addChild(sprite1);
+
+        sprite1.copain = sprite2;
+        client.pilgrims[id] = sprite1;
+    }
+    
+    function updatePilgrim(pilgrim){
+        var id = "" + pilgrim.id;
+        var directionx = pilgrim.direction.x;
+        var directiony = pilgrim.direction.y;
+        var x = pilgrim.coordinate.x;
+        var y = pilgrim.coordinate.y;
+        var speed = pilgrim.speed;
+        var color = pilgrim.color;
+        //maj
+        var sprite = client.pilgrims[id];
+
+        if (pilgrim.life == 0){
+            if (sprite.copain != null){
+                sprite.copain.destroy(true);
+                sprite.copain = null;
+            }
+            sprite.destroy(true);
+            delete(client.pilgrims[id]);
+        } else {
+
+            switch(getDirection(directionx, directiony)){
+                case "right" : sprite.animations.play('moveRight'); break;
+                case "left" : sprite.animations.play('moveLeft'); break;
+                case "down" : sprite.animations.play('moveDown'); break;
+                case "up" : sprite.animations.play('moveUp'); break;
+            }
+
+            sprite.x = x;
+            sprite.y = y;
+            sprite.body.velocity.x = directionx * speed * 1000;
+            sprite.body.velocity.y = directiony * speed * 1000;
+
+            if (sprite.copain != null){
+                sprite.copain.x = x;
+                sprite.copain.y = y;
+                sprite.copain.body.velocity.x = directionx * speed * 1000;
+                sprite.copain.body.velocity.y = directiony * speed * 1000;
+
                 switch(getDirection(directionx, directiony)){
-                    case "right" : sprite2.animations.play('moveRight'); break;
-                    case "left" : sprite2.animations.play('moveLeft'); break;
-                    case "down" : sprite2.animations.play('moveDown'); break;
-                    case "up" : sprite2.animations.play('moveUp'); break;
+                    case "right" : sprite.copain.animations.play('moveRight'); break;
+                    case "left" : sprite.copain.animations.play('moveLeft'); break;
+                    case "down" : sprite.copain.animations.play('moveDown'); break;
+                    case "up" : sprite.copain.animations.play('moveUp'); break;
                 }
+            }
+        }
+    }
+    
+    function initMap(tiles){
+        for (var i = 0 ; i < client.mapWidth ; i++){
+            client.tiles[i] = [];
+        }
+        
+        var i,j,tile;
+        for (var t = 0 ; t < tiles.length ; t++){
+            i = tiles[t].coordinate.x;
+            j = tiles[t].coordinate.y;
+            tile = game.add.sprite(i * 64, j * 64, 'tiles2');
+            client.objects.addChild(tile);
+            client.tiles[i][j] = tile;
+            setTileType(i, j, tiles[t].tileCode);
+            
+            if (tiles[t].color !== undefined){
+                var t1 = game.add.sprite(i * 64, j * 64, 'templedalle');
+                var colortile = game.add.sprite(i * 64, j * 64, 'templeblanc');
+                var t2 = game.add.sprite(i * 64, j * 64, 'templepyr');
                 
-                sprite2.tint = client.colors[Object.keys(client.colors)[color]];
-                game.physics.enable(sprite2);
-                sprite2.body.velocity.x = directionx * speed * 1000;
-                sprite2.body.velocity.y = directiony * speed * 1000;
-                
-                
-                var sprite1 = game.add.sprite(x, y, 'pilgrim1');
-                sprite1.anchor.x = 0.5;
-                sprite1.anchor.y = 0.9;
-                sprite1.animations.add('moveUp', [0,1], 2, true, true);
-                sprite1.animations.add('moveDown', [4,5], 2, true, true);
-                sprite1.animations.add('moveRight', [2,3], 2, true, true);
-                sprite1.animations.add('moveLeft', [6,7], 2, true, true);
-                switch(getDirection(directionx, directiony)){
-                    case "right" : sprite1.animations.play('moveRight'); break;
-                    case "left" : sprite1.animations.play('moveLeft'); break;
-                    case "down" : sprite1.animations.play('moveDown'); break;
-                    case "up" : sprite1.animations.play('moveUp'); break;
+                if (tiles[t].color == client.color){
+                    colortile.tint = client.colors[Object.keys(client.colors)[tiles[t].color]];
+                    
                 }
-                game.physics.enable(sprite1);
-                sprite1.body.velocity.x = directionx * speed * 1000;
-                sprite1.body.velocity.y = directiony * speed * 1000;
-                
-                
-                client.objects.addChild(sprite2);
-                client.objects.addChild(sprite1);
-                
-                sprite1.copain = sprite2;
-                client.pilgrims[id] = sprite1;
+                client.objects.addChild(t1);
+                client.objects.addChild(colortile);
+                client.objects.addChild(t2);
+            }
+        }
+        
+        
+        client.title.visible = false;
+    }
+    
+    function updateMap(tiles){
+        
+        var i,j,tile;
+        for (var t = 0 ; t < tiles.length ; t++){
+            i = tiles[t].coordinate.x;
+            j = tiles[t].coordinate.y;
+            setTileType(i, j, tiles[t].tileCode);
+            
+            //whirlwind
+            if (tiles[t].whirlwind == 1){
+                if (client.tiles[i][j].whirlwind == null){
+                    client.tiles[i][j].whirlwind = game.add.sprite(i * 64, j * 64, 'whirlwind');
+                    client.tiles[i][j].whirlwind.animations.add('anim', [0,1,2,3], 4, true, true);
+                    client.tiles[i][j].whirlwind.animations.play('anim');
+                    client.objects.addChild(client.tiles[i][j].whirlwind);
+                }
+            } else if (tiles[t].whirlwind == -1){
+                if (client.tiles[i][j].whirlwind == null){
+                    client.tiles[i][j].whirlwind = game.add.sprite(i * 64, j * 64, 'whirlwind');
+                    client.tiles[i][j].whirlwind.animations.add('anim', [3,2,1,0], 4, true, true);
+                    client.tiles[i][j].whirlwind.animations.play('anim');
+                    client.objects.addChild(client.tiles[i][j].whirlwind);
+                }
+            } else {
+                if (client.tiles[i][j].whirlwind != null){
+                    client.tiles[i][j].whirlwind.destroy(true);
+                    client.tiles[i][j].whirlwind = null;
+                }
             }
         }
         
         
     }
     
-    function updateMap(data){
-        var map = data.world.matrix;
-        if (client.tiles[0] == null){
-            
-            for (var i = 0 ; i < client.mapWidth ; i++){
-                client.tiles[i] = [];
-                for (var j = 0 ; j < client.mapHeight ; j++){
-                    var tile = game.add.sprite(i * 64, j * 64, 'tiles2');
-                    client.objects.addChild(tile);
-                    client.tiles[i][j] = tile;
-                    setTileType(i, j, map[i][j].tileCode);
-                }
-            }
-            client.title.visible = false;
-            
-            
-        } else {
-            //init temples
-            if (client.temples[0] == null){
-                for (var i = 0 ; i < data.temples.length ; i++){
-                    var temple = data.temples[i];
-                    var t1 = game.add.sprite(temple.x_matrix * 64, temple.y_matrix * 64, 'templedalle');
-                    var colortile = game.add.sprite(temple.x_matrix * 64, temple.y_matrix * 64, 'templeblanc');
-                    var t2 = game.add.sprite(temple.x_matrix * 64, temple.y_matrix * 64, 'templepyr');
-
-                    
-                    colortile.tint = client.colors[Object.keys(client.colors)[temple.color]];
-                    client.objects.addChild(t1);
-                    client.objects.addChild(colortile);
-                    client.objects.addChild(t2);
-                    client.temples.push(temple);
-                }
-            }
-            
-            
-            for (var i = 0 ; i < client.mapWidth ; i++){
-                for (var j = 0 ; j < client.mapHeight ; j++){
-                    setTileType(i, j, map[i][j].tileCode);
-                    
-                    //tornades
-                    if (map[i][j].whirlwind == 1){
-                        if (client.tiles[i][j].whirlwind == null){
-                            client.tiles[i][j].whirlwind = game.add.sprite(i * 64, j * 64, 'whirlwind');
-                            client.tiles[i][j].whirlwind.animations.add('anim', [0,1,2,3], 4, true, true);
-                            client.tiles[i][j].whirlwind.animations.play('anim');
-                            client.objects.addChild(client.tiles[i][j].whirlwind);
-                        }
-                    } else if (map[i][j].whirlwind == -1){
-                        if (client.tiles[i][j].whirlwind == null){
-                            client.tiles[i][j].whirlwind = game.add.sprite(i * 64, j * 64, 'whirlwind');
-                            client.tiles[i][j].whirlwind.animations.add('anim', [3,2,1,0], 4, true, true);
-                            client.tiles[i][j].whirlwind.animations.play('anim');
-                            client.objects.addChild(client.tiles[i][j].whirlwind);
-                        }
-                    } else {
-                        if (client.tiles[i][j].whirlwind != null){
-                            client.tiles[i][j].whirlwind.destroy(true);
-                            client.tiles[i][j].whirlwind = null;
-                        }
-                    }
-                            
-                }
+    function initPlayers(players){
+        for(var i = 0 ; i < players.length ; i++){
+            if (players[i].id == playerId) {
+                client.color = players[i].color;
             }
         }
     }
@@ -344,10 +357,24 @@ window.onload = function() {
         //console.log(players);
         client.players = players;
         client.scoreText.text = faithScoreText(players);
-        if (client.players[playerId] != null){
-            client.color = client.players[playerId].color;
+    }
+    
+    function faithScoreText(players){
+        var text = "";
+        for(var i = 0 ; i < players.length ; i++){
+            var player = players[i];
+            var maxnamelength = 15;
+            text += player.username;
+            var namelength = (player.username + "").length;
+            for(var i = namelength; i < maxnamelength ; i++) text += " ";
+            text += "  ";
+            var maxscorelength = 6;
+            var scorelength = (player.faithScore + "").length;
+            for(var i = scorelength; i < maxscorelength ; i++) text += " ";
+            text += player.faithScore;
+            text += "\n"
         }
-        
+        return text;
     }
     
     function getDirection(x, y){
