@@ -1,32 +1,18 @@
 module.exports = function(grunt) {
 
     grunt.initConfig({
-      typescript: {
-        base: {
-          src: ['./ts/**/*.ts'],
-          dest: './js',
-          options: {
-            /*watch: true,*/
-            module: 'amd',
-            target: 'es5'
-          }
-        }
-      },
-        watch: {
-          scripts: {
-            files: ['./ts/**/*.ts'],
-            tasks: ['typescript'],
-            options: {
-              spawn: false,
-            },
-          },
+      nodewebkit: {
+        options: {
+            platforms: ['win'],
+            buildDir: './build',
         },
+        src:  ['./src/**', './src/package.json'] 
+      },
+      
     });
     
-    grunt.loadNpmTasks('grunt-typescript');
-    grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-node-webkit-builder');
     
-    grunt.registerTask('default', ['typescript']);
-    grunt.registerTask('watch', ['typescript', 'watch']);
+    grunt.registerTask('default', ['nodewebkit']);
     
 }
