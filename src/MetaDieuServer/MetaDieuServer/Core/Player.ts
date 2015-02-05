@@ -1,9 +1,11 @@
 ﻿import Var = require('../Utils/Variables');
+
 export class Player {
 
     faithScore: number;
     isMeta: boolean;
     color: number;
+    username: string;
 
     humidityLastUseTime: number;
     elevationLastUseTime: number;
@@ -13,7 +15,7 @@ export class Player {
     canUseElevation() { get: { return this.elevationLastUseTime > Var.Variables.elevationCoolDown; } }
     canUseWhirlwind() { get: { return this.whirlwindLastUseTime > Var.Variables.whirlwindCoolDown; } }
 
-    constructor(public id: string, public username: string) {
+    constructor(public id: string) {
         this.faithScore = Var.Variables.defaultFaith;
         this.isMeta = false;
         this.humidityLastUseTime = 0;

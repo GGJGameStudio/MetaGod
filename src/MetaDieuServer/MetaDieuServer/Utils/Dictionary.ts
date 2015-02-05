@@ -10,11 +10,11 @@
         this.jsonDictionary[key] = value;
     }
 
-    getByKey(key: TKey) {
+    getByKey(key: TKey) : TValue {
         return this.jsonDictionary[key];
     }
 
-    getById(i: number) : TValue {
+    getByIndex(i: number) : TValue {
         return this.jsonDictionary[Object.keys(this.jsonDictionary)[i]];
     }
 

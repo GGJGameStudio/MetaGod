@@ -2,6 +2,7 @@
 import W = require('./World');
 import T = require('./Tiles');
 import P = require('./Player');
+import Dto = require('./Transfer');
 
 export interface ICommand {
     Run();
@@ -38,11 +39,9 @@ export class LoginCommand implements ICommand {
     }
 
     Run() {
-        var world = W.World.Instance;
+        var player = W.World.Instance.getPlayer(this.idPlayer);
 
-        var player = new P.Player(this.idPlayer, this.login);
-
-        world.addPlayer(this.idPlayer, player);
+        player.username = this.login;
     }
 
     CanRun() {
@@ -104,6 +103,8 @@ export class BasePowerCommand implements ICommand {
     calculateNewCodes() {
         this.getImpactedTiles().forEach(function (tile) {
             tile.calculateNewCode();
+
+            W.World.Instance.addUpdatedTile(tile);
         });
     }
 

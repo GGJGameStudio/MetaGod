@@ -2,8 +2,8 @@
 
 import socket = require('socket.io');
 import W = require('./Core/World');
-import T = require('./Core/Tiles');
 import C = require('./Core/Commands');
+import Dto = require('./Core/Transfer');
 import V = require('./Utils/Variables');
 
 console.log('Starting Server');
@@ -20,8 +20,6 @@ var world = W.World.Instance;
 server_io.on('connection', function (server_socket) {
 
     console.log("[SERVER] Player joined : " + server_socket.id);
-
-    server_socket.emit("acquittal", server_socket.id);
 
     server_socket.on('update', function (data) {
         var params = new Array();
@@ -43,6 +41,12 @@ server_io.on('connection', function (server_socket) {
         console.log("[SERVER] Player disconnected : " + server_socket.id);
         world.removePlayer(server_socket.id);
     });
+
+    world.addPlayer(server_socket.id);
+
+    server_socket.emit("acquittal", server_socket.id);
+
+    server_socket.emit("init", new Dto.WorldDto(world, true));
 });
 
 var lastUpdate: number = Date.now();
@@ -63,7 +67,8 @@ setInterval(function () {
 
     // Notify players
     if (elapsedSinceLastNotify >= V.Variables.clientNotifyRate) {
-        server_io.emit('status', world);
+        server_io.emit('status', new Dto.WorldDto(world));
+        world.resetUpdatedTile();
         elapsedSinceLastNotify -= V.Variables.clientNotifyRate;
     }
 }, V.Variables.serverUpdateRate);

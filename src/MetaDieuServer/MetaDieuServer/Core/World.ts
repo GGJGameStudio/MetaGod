@@ -7,12 +7,14 @@ import D = require('../Utils/Dictionary');
 
 export class World {
 
+    private static instance: World = null;
+
     private world: M.Matrix<T.ITile>;
+
+    updatedTiles: Array<T.ITile>;
     pilgrims: Array<Pil.Pilgrim>;
     players: D.Dictionary<string, Pla.Player>;
     temples: Array<T.TempleTile>;
-
-    private static instance: World = null;
 
     public static get Instance(): World {
 
@@ -25,6 +27,8 @@ export class World {
 
         this.world = new M.Matrix<T.ITile>(width, height);
         this.temples = new Array<T.TempleTile>();
+
+        this.updatedTiles = new Array<T.ITile>();
 
         var width = V.Variables.worldWidth;
 
@@ -102,7 +106,7 @@ export class World {
         // Update players
         var nbPlayer = this.players.length();
         for (var i = 0; i < nbPlayer; i++) {
-            var player = this.players.getById(i);
+            var player = this.players.getByIndex(i);
 
             player.update(elapsed);
         }
@@ -140,11 +144,11 @@ export class World {
         return this.world.getItem(x, y);
     }
 
-    addPlayer(idPlayer: string, player: Pla.Player) {
+    addPlayer(playerId: string) {
         var color = -1;
-        var end = false;
+        var player = new Pla.Player(playerId);
 
-        for (var i = 0; i < this.temples.length && !end; i++) {
+        for (var i = 0; i < this.temples.length; i++) {
             var temple = this.temples[i];
 
             if (temple.player == null && color == -1) {
@@ -156,7 +160,7 @@ export class World {
             }
         }
 
-        this.players.add(idPlayer, player);
+        this.players.add(playerId, player);
     }
 
     getPlayer(idPlayer: string) {
@@ -173,5 +177,26 @@ export class World {
         }
 
         this.players.remove(idPlayer);
+    }
+
+    addUpdatedTile(tile: T.ITile) {
+        var alreadyUpdated = false;
+
+        for (var i = 0; i < this.updatedTiles.length; i++) {
+            var currentTile = this.updatedTiles[i];
+            alreadyUpdated = currentTile == tile;
+
+            if (alreadyUpdated) {
+                break;
+            }
+        }
+
+        if (!alreadyUpdated) {
+            this.updatedTiles.push(tile);
+        }
+    }
+
+    resetUpdatedTile() {
+        this.updatedTiles = new Array<T.ITile>();
     }
 }

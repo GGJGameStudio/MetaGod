@@ -41,6 +41,7 @@
     <TypeScriptCompile Include="Core\Player.ts" />
     <TypeScriptCompile Include="Core\Tiles.ts" />
     <TypeScriptCompile Include="Core\World.ts" />
+    <TypeScriptCompile Include="Core\Transfer.ts" />
     <TypeScriptCompile Include="Scripts\typings\node\node.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\socket.io\socket.io.d.ts" />
     <TypeScriptCompile Include="Utils\Dictionary.ts" />
