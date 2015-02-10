@@ -12,12 +12,12 @@ var playerId;
 var serverip = window.prompt('Server ip');
 //var serverip = "192.168.13.31";
 //var serverip = "localhost";
-if (serverip == null) {
+if (serverip.length == 0) {
     exitApplication();
 }
 
 var playerName = window.prompt('Player name');
-if (playerName == null) {
+if (playerName.length == 0) {
     exitApplication();
 }
 
@@ -32,41 +32,82 @@ socket.on('acquittal', function(data) {
     socket.emit('update', data );
 });
 
+var client = {
+    playerName : "",
+    playerId : "",
+    color : "",
+    temples: [],
+    windowWidth : 1280,
+    windowHeight : 900,
+    mapWidth : 40,
+    mapHeight : 40,
+    tileWidth : 64,
+    tileHeight : 64,
+    tileMargin : 12,
+    scaleX : 0.5,
+    scaleY : 0.5,
+    tiles : [],
+    pilgrims : {},
+    cameraMoveRight : false,
+    cameraMoveLeft : false,
+    cameraMoveUp : false,
+    cameraMoveDown : false,
+    currentPower : 0,
+    players : {},
+    colors : { red: '0xff4444', yellow:'0xffd800', blue:'0x1b1bc7 ', green: '0x11910b', orange: '0xe3810d', magenta: '0xDF98DF', cyan: '0x00bff3', purple: '0x92278f' },
+    borderColorMap : [
+        '#E3D13A',
+        '#E3D13A',
+        '#E3D13A',
+        '#E3D13A',
+        '#E3D13A',
+        '#E3D13A',
+        '#83AC54',
+        '#83AC54',
+        '#83AC54',
+        '#83AC54',
+        '#83AC54',
+        '#696208',
+        '#696208',
+        '#696208',
+        '#696208',
+        '#696208',
+        '#E3D13A',
+        '#E3D13A',
+        '#E3D13A',
+        '#E3D13A',
+        '#83AC54',
+        '#2F3E56',
+        '#2F3E56',
+        '#2F3E56',
+        '#2F3E56',
+        '#696208',
+        '#696208',
+        '#696208',
+        '#696208',
+        '#83AC54',
+        '#83AC54',
+        '#83AC54',
+        '#83AC54',
+        '#6B4520',
+        '#6B4520',
+        '#6B4520',
+        '#6B4520',
+        '#6B4520',
+        '#BBD1DD'
+    ]
+};
+
+var game;
+
  
 window.onload = function() {
     
-    var client = {
-        playerName : "",
-        playerId : "",
-        color : "",
-        temples: [],
-        windowWidth : 1280,
-        windowHeight : 900,
-        mapWidth : 40,
-        mapHeight : 40,
-        tileWidth : 64,
-        tileHeight : 64,
-        scaleX : 0.5,
-        scaleY : 0.5,
-        tiles : [],
-        pilgrims : {},
-        cameraMoveRight : false,
-        cameraMoveLeft : false,
-        cameraMoveUp : false,
-        cameraMoveDown : false,
-        currentPower : 0,
-        players : {},
-        colors : { red: '0xff4444', yellow:'0xffd800', blue:'0x1b1bc7 ', green: '0x11910b', orange: '0xe3810d', magenta: '0xDF98DF', cyan: '0x00bff3', purple: '0x92278f' }
-    };
-    
-    var game = new Phaser.Game(client.windowWidth, client.windowHeight, Phaser.AUTO, '', { 
+    game = new Phaser.Game(client.windowWidth, client.windowHeight, Phaser.AUTO, '', { 
         preload: preload, 
         create: create, 
         update: update
     });
-
-    
-    var players = {};
     
     function preload () {
         game.load.spritesheet('pilgrim1', 'assets/spritesheet pilgrim.png', 42, 72, 8);
@@ -85,360 +126,63 @@ window.onload = function() {
         game.load.image('title', 'assets/pilgrims title.png', 1280, 900);
     }
     
-    function configureClientSocket()
-    {
-        client.playerName = playerName;
-        client.playerId = playerId;
-        client.objects = game.add.sprite(0, 0);
-        client.objects.scale.x = client.scaleX;
-        client.objects.scale.y = client.scaleY;
-        
-        music = game.add.audio('music', 1, true);
-
-        music.play('',0,1,true);
-        
-        client.title = game.add.sprite(0, 0, 'title');
-        
-        
-        //faith score
-        var text = "";
-        var style = { font: "bold 25px Courier", fill: "#770022", align: "center" };
-
-        client.scoreText = game.add.text(client.windowWidth - 400, 20, text, style);
-        
-        client.ihm = game.add.sprite(20, client.windowHeight - 75, 'ihm');
-        client.ihm1 = game.add.sprite(20, client.windowHeight - 75, 'ihm1');
-        client.ihm2 = game.add.sprite(20 + 64, client.windowHeight - 75, 'ihm2');
-        client.ihm3 = game.add.sprite(20 + 64 * 2, client.windowHeight - 75, 'ihm3');
-        client.ihm2.visible = false;
-        client.ihm3.visible = false;
-        
-        client.ihm1.inputEnabled = true;
-        client.ihm2.inputEnabled = true;
-        client.ihm3.inputEnabled = true;
-        
-        /*client.ihm1.input.onInputDown.add(skill1);
-        client.ihm2.input.onInputDown.add(skill2);
-        client.ihm3.input.onInputDown.add(skill3);*/
-        
-        socket.on('status', function(data) {
-            //console.log(data);
-            if (data.players !== undefined){
-                updatePlayers(data.players);
-            }
-            
-            if (data.tiles !== undefined && data.tiles[0] != null){
-                updateMap(data.tiles);
-            }
-            
-            
-            if (data.pilgrims !== undefined){
-                updatePilgrims(data.pilgrims);
-            }
-        });
-        
-        
-        socket.on('init', function(data) {
-            //console.log(data);
-            initPlayers(data.players);
-            
-            initMap(data.tiles);
-            
-            initPilgrims(data.pilgrims);
-        });
-    }
-    
-    function setTileType(x, y, type){
-        client.tiles[x][y].frame = type;
-    }
-    
-    function getTileType(x, y){
-        return client.tiles[x][y].frame;
-    }
-    
-    function initPilgrims(pilgrims){
-        for(var i = 0; i < pilgrims.length ; i++){
-            createPilgrim(pilgrims[i]);
-        }
-    }
-    
-    function updatePilgrims(pilgrims){
-        
-        for(var i = 0; i < pilgrims.length ; i++){
-            pilgrim = pilgrims[i];
-            
-            if (client.pilgrims[pilgrim.id] != null){
-                updatePilgrim(pilgrims[i]);
-                
-            } else if (pilgrim.life != 0){
-                createPilgrim(pilgrims[i]);
-            }
-        }
-    }
-    
-    function createPilgrim(pilgrim){
-        var id = "" + pilgrim.id;
-        var directionx = pilgrim.direction.x;
-        var directiony = pilgrim.direction.y;
-        var x = pilgrim.coordinate.x;
-        var y = pilgrim.coordinate.y;
-        var speed = pilgrim.speed;
-        var color = pilgrim.color;
-        
-        var sprite2 = game.add.sprite(x, y, 'pilgrim2');
-        sprite2.anchor.x = 0.5;
-        sprite2.anchor.y = 0.9;
-        sprite2.animations.add('moveUp', [0,1], 2, true, true);
-        sprite2.animations.add('moveDown', [4,5], 2, true, true);
-        sprite2.animations.add('moveRight', [2,3], 2, true, true);
-        sprite2.animations.add('moveLeft', [6,7], 2, true, true);
-        switch(getDirection(directionx, directiony)){
-            case "right" : sprite2.animations.play('moveRight'); break;
-            case "left" : sprite2.animations.play('moveLeft'); break;
-            case "down" : sprite2.animations.play('moveDown'); break;
-            case "up" : sprite2.animations.play('moveUp'); break;
-        }
-
-        sprite2.tint = client.colors[Object.keys(client.colors)[color]];
-        game.physics.enable(sprite2);
-        sprite2.body.velocity.x = directionx * speed * 1000;
-        sprite2.body.velocity.y = directiony * speed * 1000;
-
-
-        var sprite1 = game.add.sprite(x, y, 'pilgrim1');
-        sprite1.anchor.x = 0.5;
-        sprite1.anchor.y = 0.9;
-        sprite1.animations.add('moveUp', [0,1], 2, true, true);
-        sprite1.animations.add('moveDown', [4,5], 2, true, true);
-        sprite1.animations.add('moveRight', [2,3], 2, true, true);
-        sprite1.animations.add('moveLeft', [6,7], 2, true, true);
-        switch(getDirection(directionx, directiony)){
-            case "right" : sprite1.animations.play('moveRight'); break;
-            case "left" : sprite1.animations.play('moveLeft'); break;
-            case "down" : sprite1.animations.play('moveDown'); break;
-            case "up" : sprite1.animations.play('moveUp'); break;
-        }
-        game.physics.enable(sprite1);
-        sprite1.body.velocity.x = directionx * speed * 1000;
-        sprite1.body.velocity.y = directiony * speed * 1000;
-
-
-        client.objects.addChild(sprite2);
-        client.objects.addChild(sprite1);
-
-        sprite1.copain = sprite2;
-        client.pilgrims[id] = sprite1;
-    }
-    
-    function updatePilgrim(pilgrim){
-        var id = "" + pilgrim.id;
-        var directionx = pilgrim.direction.x;
-        var directiony = pilgrim.direction.y;
-        var x = pilgrim.coordinate.x;
-        var y = pilgrim.coordinate.y;
-        var speed = pilgrim.speed;
-        var color = pilgrim.color;
-        //maj
-        var sprite = client.pilgrims[id];
-
-        if (pilgrim.life == 0){
-            if (sprite.copain != null){
-                sprite.copain.destroy(true);
-                sprite.copain = null;
-            }
-            sprite.destroy(true);
-            delete(client.pilgrims[id]);
-        } else {
-
-            switch(getDirection(directionx, directiony)){
-                case "right" : sprite.animations.play('moveRight'); break;
-                case "left" : sprite.animations.play('moveLeft'); break;
-                case "down" : sprite.animations.play('moveDown'); break;
-                case "up" : sprite.animations.play('moveUp'); break;
-            }
-
-            sprite.x = x;
-            sprite.y = y;
-            sprite.body.velocity.x = directionx * speed * 1000;
-            sprite.body.velocity.y = directiony * speed * 1000;
-
-            if (sprite.copain != null){
-                sprite.copain.x = x;
-                sprite.copain.y = y;
-                sprite.copain.body.velocity.x = directionx * speed * 1000;
-                sprite.copain.body.velocity.y = directiony * speed * 1000;
-
-                switch(getDirection(directionx, directiony)){
-                    case "right" : sprite.copain.animations.play('moveRight'); break;
-                    case "left" : sprite.copain.animations.play('moveLeft'); break;
-                    case "down" : sprite.copain.animations.play('moveDown'); break;
-                    case "up" : sprite.copain.animations.play('moveUp'); break;
-                }
-            }
-        }
-    }
-    
-    function initMap(tiles){
-        for (var i = 0 ; i < client.mapWidth ; i++){
-            client.tiles[i] = [];
-        }
-        
-        var i,j,tile;
-        for (var t = 0 ; t < tiles.length ; t++){
-            i = tiles[t].coordinate.x;
-            j = tiles[t].coordinate.y;
-            tile = game.add.sprite(i * 64, j * 64, 'tiles2');
-            client.objects.addChild(tile);
-            client.tiles[i][j] = tile;
-            setTileType(i, j, tiles[t].tileCode);
-            
-            if (tiles[t].color !== undefined){
-                var t1 = game.add.sprite(i * 64, j * 64, 'templedalle');
-                var colortile = game.add.sprite(i * 64, j * 64, 'templeblanc');
-                var t2 = game.add.sprite(i * 64, j * 64, 'templepyr');
-                
-                if (tiles[t].color == client.color){
-                    colortile.tint = client.colors[Object.keys(client.colors)[tiles[t].color]];
-                    
-                }
-                client.objects.addChild(t1);
-                client.objects.addChild(colortile);
-                client.objects.addChild(t2);
-            }
-        }
-        
-        
-        client.title.visible = false;
-    }
-    
-    function updateMap(tiles){
-        
-        var i,j,tile;
-        for (var t = 0 ; t < tiles.length ; t++){
-            i = tiles[t].coordinate.x;
-            j = tiles[t].coordinate.y;
-            setTileType(i, j, tiles[t].tileCode);
-            
-            //whirlwind
-            if (tiles[t].whirlwind == 1){
-                if (client.tiles[i][j].whirlwind == null){
-                    client.tiles[i][j].whirlwind = game.add.sprite(i * 64, j * 64, 'whirlwind');
-                    client.tiles[i][j].whirlwind.animations.add('anim', [0,1,2,3], 4, true, true);
-                    client.tiles[i][j].whirlwind.animations.play('anim');
-                    client.objects.addChild(client.tiles[i][j].whirlwind);
-                }
-            } else if (tiles[t].whirlwind == -1){
-                if (client.tiles[i][j].whirlwind == null){
-                    client.tiles[i][j].whirlwind = game.add.sprite(i * 64, j * 64, 'whirlwind');
-                    client.tiles[i][j].whirlwind.animations.add('anim', [3,2,1,0], 4, true, true);
-                    client.tiles[i][j].whirlwind.animations.play('anim');
-                    client.objects.addChild(client.tiles[i][j].whirlwind);
-                }
-            } else {
-                if (client.tiles[i][j].whirlwind != null){
-                    client.tiles[i][j].whirlwind.destroy(true);
-                    client.tiles[i][j].whirlwind = null;
-                }
-            }
-        }
-        
-        
-    }
-    
-    function initPlayers(players){
-        for(var i = 0 ; i < players.length ; i++){
-            if (players[i].id == playerId) {
-                client.color = players[i].color;
-            }
-        }
-    }
-    
-    function updatePlayers(players){
-        //console.log(players);
-        client.players = players;
-        client.scoreText.text = faithScoreText(players);
-    }
-    
-    function faithScoreText(players){
-        var text = "";
-        for(var i = 0 ; i < players.length ; i++){
-            var player = players[i];
-            var maxnamelength = 15;
-            text += player.username;
-            var namelength = (player.username + "").length;
-            for(var i = namelength; i < maxnamelength ; i++) text += " ";
-            text += "  ";
-            var maxscorelength = 6;
-            var scorelength = (player.faithScore + "").length;
-            for(var i = scorelength; i < maxscorelength ; i++) text += " ";
-            text += player.faithScore;
-            text += "\n"
-        }
-        return text;
-    }
-    
-    function getDirection(x, y){
-        if (x > 0) return "right";
-        if (y > 0) return "up";
-        if (x < 0) return "left";
-        if (y < 0) return "down";
-    }
-
     function create () {
+        
+        initClient();
 
-        configureClientSocket();
+        initSocket();
         
-        keyEsc = game.input.keyboard.addKey(Phaser.Keyboard.ESC);
-        keyEsc.onDown.add(exitApplication, this);
+        initIhm();
         
-        key1 = game.input.keyboard.addKey(Phaser.Keyboard.ONE);
-        key1.onDown.add(skill1, this);
-        
-        key2 = game.input.keyboard.addKey(Phaser.Keyboard.TWO);
-        key2.onDown.add(skill2, this);
-        
-        key3 = game.input.keyboard.addKey(Phaser.Keyboard.THREE);
-        key3.onDown.add(skill3, this);
-        
-        keySpace = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-        keySpace.onDown.add(reset, this);
-        
-        game.input.onDown.add(mouseClick, this);
-        
-        game.input.mouse.mouseMoveCallback = mouseMove;
-        
+        initInput();
     }
     
     function update () {
         
-        var cameraMinX = - client.tileWidth * client.scaleX * client.mapWidth + client.windowWidth;
+        var cameraMinX = - (client.tileWidth + client.tileMargin) * client.scaleX * client.mapWidth + client.windowWidth - client.tileMargin * client.scaleX;
         var cameraMaxX = 0;
-        var cameraMinY = - client.tileHeight * client.scaleY * client.mapHeight + client.windowHeight;
+        var cameraMinY = - (client.tileHeight + client.tileMargin) * client.scaleY * client.mapHeight + client.windowHeight - client.tileMargin * client.scaleY;
         var cameraMaxY = 0;
         
         
         if (client.cameraMoveRight){
-            client.objects.x -= 4;
-            if (client.objects.x < cameraMinX) client.objects.x = cameraMinX;
+            client.entities.position.x -= 4;
+            client.ground.position.x -= 4;
+            if (client.ground.position.x < cameraMinX) {
+                client.ground.position.x = cameraMinX;
+                client.entities.position.x = cameraMinX;
+            }
         }
         
         if (client.cameraMoveLeft){
-            client.objects.x += 4;
-            if (client.objects.x > cameraMaxX) client.objects.x = cameraMaxX;
+            client.entities.position.x += 4;
+            client.ground.position.x += 4;
+            if (client.ground.position.x > cameraMaxX) {
+                client.ground.position.x = cameraMaxX;
+                client.entities.position.x = cameraMaxX;
+            }
         }
         
         if (client.cameraMoveDown){
-            client.objects.y -= 4;
-            if (client.objects.y < cameraMinY) client.objects.y = cameraMinY;
+            client.entities.position.y -= 4;
+            client.ground.position.y -= 4;
+            if (client.ground.position.y < cameraMinY) {
+                client.ground.position.y = cameraMinY;
+                client.entities.position.y = cameraMinY;
+            }
         }
         
         if (client.cameraMoveUp){
-            client.objects.y += 4;
-            if (client.objects.y > cameraMaxY) client.objects.y = cameraMaxY;
+            client.entities.position.y += 4;
+            client.ground.position.y += 4;
+            if (client.ground.position.y > cameraMaxY) {
+                client.ground.position.y = cameraMaxY;
+                client.entities.position.y = cameraMaxY;
+            }
         }
         
         // opti
-        var screenx = Math.floor((client.windowWidth / 2 - client.objects.x) / (client.tileWidth * client.scaleX));
+        /*var screenx = Math.floor((client.windowWidth / 2 - client.objects.x) / (client.tileWidth * client.scaleX));
         var screeny = Math.floor((client.windowHeight / 2 - client.objects.y) / (client.tileWidth * client.scaleY));
         
         var nbTileWidthVisible = client.windowWidth / (client.tileWidth * client.scaleX);
@@ -459,82 +203,62 @@ window.onload = function() {
                     }
                 }
             }
-        }
+        }*/
     }
-    
-    function reset () {
-        
-        var win = gui.Window.get();
-        win.reloadDev();
-    }
-    
-    function skill1 () {
-        client.currentPower = 0;
-        client.ihm1.visible = true;
-        client.ihm2.visible = false;
-        client.ihm3.visible = false;
-        console.log("skill1");
-    }
-    
-    function skill2 () {
-        client.currentPower = 1;
-        client.ihm1.visible = false;
-        client.ihm2.visible = true;
-        client.ihm3.visible = false;
-        console.log("skill2");
-    }
-    
-    function skill3 () {
-        client.currentPower = 2;
-        client.ihm1.visible = false;
-        client.ihm2.visible = false;
-        client.ihm3.visible = true;
-        console.log("skill3");
-    }
-    
-    function mouseClick(evt){
-        if (evt.button == 0){
-            mouseLeft(evt);
-        } else if (evt.button == 2){
-            mouseRight(evt);
-        }
-    }
-    
-    
-    function mouseLeft(evt){
-        var x = Math.floor((evt.positionDown.x - client.objects.x) / (client.tileWidth * client.scaleX));
-        var y = Math.floor((evt.positionDown.y - client.objects.y) / (client.tileWidth * client.scaleY));
-        var command;
-        switch(client.currentPower){
-            case 0: command = 'AddElevationCommand'; break;
-            case 1: command = 'AddHumidityCommand'; break;
-            case 2: command = 'AddWhirlwindCommand'; break;
-        }
-        
-        var data = { command: command, x: x, y: y };
-        socket.emit('update',data );
-    }
-    
-    function mouseRight(evt){
-        var x = Math.floor((evt.positionDown.x - client.objects.x) / (client.tileWidth * client.scaleX));
-        var y = Math.floor((evt.positionDown.y - client.objects.y) / (client.tileWidth * client.scaleY));
-        var command;
-        switch(client.currentPower){
-            case 0: command = 'RemoveElevationCommand'; break;
-            case 1: command = 'RemoveHumidityCommand'; break;
-            case 2: command = 'RemoveWhirlwindCommand'; break;
-        }
-        
-        var data = { command: command, x: x, y: y };
-        socket.emit('update',data );
-    }
-    
-    function mouseMove(evt){
-        client.cameraMoveLeft = evt.layerX < 50;
-        client.cameraMoveRight = evt.layerX > client.windowWidth - 50;
-        client.cameraMoveUp = evt.layerY < 50;
-        client.cameraMoveDown = evt.layerY > client.windowHeight - 50;
-        
-    }
-
 };
+
+
+function initClient(){
+    client.playerName = playerName;
+    client.playerId = playerId;
+
+    music = game.add.audio('music', 1, true);
+
+    music.play('',0,1,true);
+
+    client.title = game.add.sprite(0, 0, 'title');
+
+    //groups
+    client.ground = game.add.group();
+    client.entities = game.add.group();
+    client.ihmGroup = game.add.group();
+
+    client.ground.scale.x = client.scaleX;
+    client.ground.scale.y = client.scaleY;
+
+    client.entities.scale.x = client.scaleX;
+    client.entities.scale.y = client.scaleY;   
+}
+
+function initSocket() {
+    
+    socket.on('status', function(data) {
+        if (client.init) {
+            //console.log(data);
+            if (data.players !== undefined){
+                updatePlayers(data.players);
+            }
+
+            if (data.tiles !== undefined && data.tiles[0] != null){
+                updateMap(data.tiles);
+            }
+
+
+            if (data.pilgrims !== undefined){
+                updatePilgrims(data.pilgrims);
+            }
+        }
+    });
+
+
+    socket.on('init', function(data) {
+        //console.log(data);
+        initPlayers(data.players);
+
+        initMap(data.tiles);
+
+        initPilgrims(data.pilgrims);
+
+        client.init = true;
+    });
+}
