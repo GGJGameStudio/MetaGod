@@ -7,6 +7,18 @@ function exitApplication () {
     gui.App.quit();
 }
 
+serverip = window.prompt('Server ip');
+//serverip = "192.168.13.31";
+//serverip = "localhost";
+if (serverip != null && serverip.length == 0) {
+    exitApplication();
+}
+
+playerName = window.prompt('Player name');
+if (playerName != null && playerName.length == 0) {
+    exitApplication();
+}
+
 var client = {
     playerName : "",
     playerId : "",
@@ -18,10 +30,11 @@ var client = {
     mapHeight : 40,
     tileWidth : 64,
     tileHeight : 64,
-    tileMargin : 0,
+    tileMargin : 12,
     scaleX : 0.5,
     scaleY : 0.5,
     tiles : [],
+    borders : [],
     pilgrims : {},
     cameraMoveRight : false,
     cameraMoveLeft : false,
@@ -89,6 +102,7 @@ window.onload = function() {
     });
     
     function preload () {
+        game.load.audio('music', 'assets/Ingame.ogg');
         game.load.spritesheet('pilgrim1', 'assets/spritesheet pilgrim.png', 42, 72, 8);
         game.load.spritesheet('pilgrim2', 'assets/spritesheet pilgrim cape.png', 42, 72, 8);
         game.load.spritesheet('tiles2','assets/tilesheet.png', client.tileWidth, client.tileHeight, 43);
@@ -97,19 +111,17 @@ window.onload = function() {
         game.load.spritesheet('ihm1','assets/interface/interface01.png', 64, 64);
         game.load.spritesheet('ihm2','assets/interface/interface02.png', 64, 64);
         game.load.spritesheet('ihm3','assets/interface/interface03.png', 64, 64);
-        game.load.audio('music', 'assets/Ingame.ogg');
         game.load.image('templeblanc', 'assets/temple blanc.png', 64, 64);
         game.load.image('templedalle', 'assets/temple dalle.png', 64, 64);
         game.load.image('templepyr', 'assets/temple pyramide.png', 64, 64);
-        
         game.load.image('title', 'assets/pilgrims title.png', 1280, 900);
     }
     
     function create () {
         
-        initSocket();
-        
         initClient();
+        
+        initSocket();
 
         initIhm();
         
@@ -118,71 +130,80 @@ window.onload = function() {
     
     function update () {
         
-        var cameraMinX = - (client.tileWidth + client.tileMargin) * client.scaleX * client.mapWidth + client.windowWidth - client.tileMargin * client.scaleX;
-        var cameraMaxX = 0;
-        var cameraMinY = - (client.tileHeight + client.tileMargin) * client.scaleY * client.mapHeight + client.windowHeight - client.tileMargin * client.scaleY;
-        var cameraMaxY = 0;
+        if (client.init){
         
-        
-        if (client.cameraMoveRight){
-            client.entities.position.x -= 4;
-            client.ground.position.x -= 4;
-            if (client.ground.position.x < cameraMinX) {
-                client.ground.position.x = cameraMinX;
-                client.entities.position.x = cameraMinX;
-            }
-        }
-        
-        if (client.cameraMoveLeft){
-            client.entities.position.x += 4;
-            client.ground.position.x += 4;
-            if (client.ground.position.x > cameraMaxX) {
-                client.ground.position.x = cameraMaxX;
-                client.entities.position.x = cameraMaxX;
-            }
-        }
-        
-        if (client.cameraMoveDown){
-            client.entities.position.y -= 4;
-            client.ground.position.y -= 4;
-            if (client.ground.position.y < cameraMinY) {
-                client.ground.position.y = cameraMinY;
-                client.entities.position.y = cameraMinY;
-            }
-        }
-        
-        if (client.cameraMoveUp){
-            client.entities.position.y += 4;
-            client.ground.position.y += 4;
-            if (client.ground.position.y > cameraMaxY) {
-                client.ground.position.y = cameraMaxY;
-                client.entities.position.y = cameraMaxY;
-            }
-        }
-        
-        // opti
-        /*var screenx = Math.floor((client.windowWidth / 2 - client.objects.x) / (client.tileWidth + client.tileMargin) * client.scaleX));
-        var screeny = Math.floor((client.windowHeight / 2 - client.objects.y) / (client.tileWidth + client.tileMargin) * client.scaleY));
-        
-        var nbTileWidthVisible = client.windowWidth / ((client.tileWidth + client.tileMargin) * client.scaleX);
-        var nbTileHeightVisible = client.windowHeight / ((client.tileHeight + client.tileMargin) * client.scaleY);
-        
-        if (client.tiles[0] != null){
-            for (var i = 0 ; i < client.mapWidth ; i++){
-                for (var j = 0 ; j < client.mapHeight ; j++){
-                    if (i < screenx - nbTileWidthVisible /2 || 
-                        i > screenx + nbTileWidthVisible /2 || 
-                        j > screeny + nbTileHeightVisible /2 || 
-                        j < screeny - nbTileHeightVisible /2)
-                       {
-                           client.tiles[i][j].visible = false;
+            var cameraMinX = - (client.tileWidth + client.tileMargin) * client.scaleX * client.mapWidth + client.windowWidth - client.tileMargin * client.scaleX;
+            var cameraMaxX = 0;
+            var cameraMinY = - (client.tileHeight + client.tileMargin) * client.scaleY * client.mapHeight + client.windowHeight - client.tileMargin * client.scaleY;
+            var cameraMaxY = 0;
 
-                    } else {
-                        client.tiles[i][j].visible = true;
-                    }
+
+            if (client.cameraMoveRight){
+                client.entities.position.x -= 4;
+                client.ground.position.x -= 4;
+                if (client.ground.position.x < cameraMinX) {
+                    client.ground.position.x = cameraMinX;
+                    client.entities.position.x = cameraMinX;
                 }
             }
-        }*/
+
+            if (client.cameraMoveLeft){
+                client.entities.position.x += 4;
+                client.ground.position.x += 4;
+                if (client.ground.position.x > cameraMaxX) {
+                    client.ground.position.x = cameraMaxX;
+                    client.entities.position.x = cameraMaxX;
+                }
+            }
+
+            if (client.cameraMoveDown){
+                client.entities.position.y -= 4;
+                client.ground.position.y -= 4;
+                if (client.ground.position.y < cameraMinY) {
+                    client.ground.position.y = cameraMinY;
+                    client.entities.position.y = cameraMinY;
+                }
+            }
+
+            if (client.cameraMoveUp){
+                client.entities.position.y += 4;
+                client.ground.position.y += 4;
+                if (client.ground.position.y > cameraMaxY) {
+                    client.ground.position.y = cameraMaxY;
+                    client.entities.position.y = cameraMaxY;
+                }
+            }
+
+            // opti
+            /*var screenx = Math.floor((client.windowWidth / 2 - client.entities.position.x) / ((client.tileWidth + client.tileMargin) * client.scaleX));
+            var screeny = Math.floor((client.windowHeight / 2 - client.entities.position.y) / ((client.tileWidth + client.tileMargin) * client.scaleY));
+
+            var nbTileWidthVisible = 1.1 * client.windowWidth / ((client.tileWidth + client.tileMargin) * client.scaleX);
+            var nbTileHeightVisible = 1.1 * client.windowHeight / ((client.tileHeight + client.tileMargin) * client.scaleY);
+
+            if (client.tiles[0] != null){
+                for (var i = 0 ; i < client.mapWidth ; i++){
+                    for (var j = 0 ; j < client.mapHeight ; j++){
+                        if (i < screenx - nbTileWidthVisible /2 || 
+                            i > screenx + nbTileWidthVisible /2 || 
+                            j > screeny + nbTileHeightVisible /2 || 
+                            j < screeny - nbTileHeightVisible /2)
+                           {
+                               client.tiles[i][j].visible = false;
+                               if (client.borders[i][j][0] != null) client.borders[i][j][0].visible = false;
+                               if (client.borders[i][j][1] != null) client.borders[i][j][1].visible = false;
+                               if (client.borders[i][j][2] != null) client.borders[i][j][2].visible = false;
+
+                        } else {
+                            client.tiles[i][j].visible = true;
+                            if (client.borders[i][j][0] != null) client.borders[i][j][0].visible = true;
+                            if (client.borders[i][j][1] != null) client.borders[i][j][1].visible = true;
+                            if (client.borders[i][j][2] != null) client.borders[i][j][2].visible = true;
+                        }
+                    }
+                }
+            }*/
+        }
     }
 };
 
@@ -190,8 +211,8 @@ window.onload = function() {
 function initClient(){
     client.playerName = playerName;
     client.playerId = playerId;
-
-    music = game.add.audio('music', 1, true);
+    
+    var music = game.add.audio('music', 1, true);
 
     music.play('',0,1,true);
 
@@ -212,18 +233,6 @@ function initClient(){
 function initSocket() {
     
     
-    serverip = window.prompt('Server ip');
-    //serverip = "192.168.13.31";
-    //serverip = "localhost";
-    if (serverip != null && serverip.length == 0) {
-        exitApplication();
-    }
-
-    playerName = window.prompt('Player name');
-    if (playerName != null && playerName.length == 0) {
-        exitApplication();
-    }
-
     socket = io('http://'+ serverip +':1337');
     
     socket.on('status', function(data) {

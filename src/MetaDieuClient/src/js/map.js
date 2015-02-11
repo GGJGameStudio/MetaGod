@@ -9,7 +9,8 @@ function getTileType(x, y){
 function initMap(tiles){
 
     for (var i = 0 ; i < client.mapWidth ; i++){
-        client.tiles[i] = [];
+        client.tiles[i] = [client.mapHeight];
+        client.borders[i] = [client.mapHeight];
     }
 
     var i,j,tile;
@@ -39,6 +40,7 @@ function initMap(tiles){
     if (client.tileMargin != 0){
         for (var i = 0 ; i < client.mapWidth ; i++){
             for (var j = 0 ; j < client.mapHeight ; j++){
+                client.borders[i][j] = [3];
                 drawBorders(i, j);
             }
         }
@@ -112,6 +114,7 @@ function drawBorders(i, j){
 
         border = game.add.sprite((client.tileWidth + client.tileMargin) * (i + 1), client.tileMargin + (client.tileHeight + client.tileMargin) * j, bmd);
         client.ground.add(border);
+        client.borders[i][j][0] = border;
     }
 
     //vertical
@@ -125,6 +128,7 @@ function drawBorders(i, j){
 
         border = game.add.sprite(client.tileMargin + (client.tileWidth + client.tileMargin) * i, (client.tileHeight + client.tileMargin) * (j + 1), bmd);
         client.ground.add(border);
+        client.borders[i][j][1] = border;
     }
 
     //center
@@ -168,5 +172,6 @@ function drawBorders(i, j){
 
         border = game.add.sprite((client.tileWidth + client.tileMargin) * (i + 1), (client.tileHeight + client.tileMargin) * (j + 1), bmd);
         client.ground.add(border);
+        client.borders[i][j][2] = border;
     }
 }
