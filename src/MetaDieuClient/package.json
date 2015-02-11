@@ -1,5 +1,5 @@
 {
-  "name": "nw-phaser-glue",
+  "name": "Pilgrims",
   "version": "0.0.1",
   "description": "A framework for an easy game development with phaser.js and node-webkit",
   "main": "index.html",
@@ -8,16 +8,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://aloisdeniel@bitbucket.org/aloisdeniel/nw-phaser-glue.git"
-  },
   "keywords": [
     "phaser",
     "game",
     "node-webkit"
   ],
-  "author": "Alois Deniel",
+  "author": "GGJ2015",
   "license": "ISC",
   "dependencies": {
     "phaser": "^2.2.2",
