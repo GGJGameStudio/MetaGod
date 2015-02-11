@@ -21,8 +21,6 @@ export interface ITile {
     udatePilgrimState(elapsed: number, pilgrim: P.Pilgrim, alreadyThere: boolean);
 
     calculateNewCode();
-
-    update(elapsed: number);
 }
 
 export class BaseTile implements ITile {
@@ -183,8 +181,6 @@ export class BaseTile implements ITile {
         }
     }
 
-
-
     calculateNewCode() {
         this.randomTileNumber = R.Random(0, 3);
         //Full calculus here
@@ -270,13 +266,6 @@ export class BaseTile implements ITile {
 
         this.tileCode = indexStart + indexOffset;
     }
-
-    update(elapsed: number) {
-        //this.elevation = 0;
-        //this.humidity = 0;
-        //this.whirlwind = 0;
-        //this.mountainType = MountainType.None;
-    }
 }
 
 export class EnvironmentTile extends BaseTile {
@@ -284,9 +273,6 @@ export class EnvironmentTile extends BaseTile {
     constructor(x: number, y: number) {
         super(x, y);
     }
-
-    update(elapsed: number) { }
-
 }
 
 export enum IndestructibleType {
@@ -312,14 +298,6 @@ export class IndestructibleTile extends BaseTile {
         this.indestructibleType = IndestructibleType.Basic;
         this.calculateNewCode();
     }
-
-    update(elapsed: number) {
-        this.elevation = 0;
-        this.humidity = 0;
-        this.whirlwind = 0;
-        this.mountainType = MountainType.None;
-    }
-
 }
 
 export class TempleTile extends IndestructibleTile {
@@ -394,7 +372,7 @@ export class SpawnerTile extends IndestructibleTile {
 
             this.frequence = this.determineFrequence();
         } else if (currentPilgrim > maxPilgrim) {
-            console.log('Maximum simultaneous pilgrims reached');
+            console.log('[SERVER] Maximum simultaneous pilgrims reached');
         }
     }
 
@@ -402,11 +380,5 @@ export class SpawnerTile extends IndestructibleTile {
         this.lastSpawn += elapsed;
 
         this.generatePilgrim();
-
-        this.elevation = 0;
-        this.humidity = 0;
-        this.whirlwind = 0;
-        this.mountainType = MountainType.None;
     }
-
 }

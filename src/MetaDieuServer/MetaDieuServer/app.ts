@@ -8,13 +8,22 @@ import V = require('./Utils/Variables');
 
 console.log('Starting Server');
 console.log('---------------');
+console.log();
+
+console.log('Creating world');
+
+var world = W.World.Instance;
+
+console.log('World created');
+
+console.log('---------------');
+console.log();
 
 var server_io = socket.listen(1337);
 
 console.log('Server listening on port 1337');
-
-// Get World singleton
-var world = W.World.Instance;
+console.log('---------------');
+console.log();
 
 //Connection from client
 server_io.on('connection', function (server_socket) {

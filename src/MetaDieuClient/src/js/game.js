@@ -1,5 +1,5 @@
 //var showDebugger = confirm('Do you want the debugger ?');
-var showDebugger = true;
+var showDebugger = false;
 
 if(showDebugger)
 {

@@ -15,6 +15,7 @@ export class World {
     pilgrims: Array<Pil.Pilgrim>;
     players: D.Dictionary<string, Pla.Player>;
     temples: Array<T.TempleTile>;
+    spawns: Array<T.SpawnerTile>;
 
     public static get Instance(): World {
 
@@ -27,6 +28,7 @@ export class World {
 
         this.world = new M.Matrix<T.ITile>(width, height);
         this.temples = new Array<T.TempleTile>();
+        this.spawns = new Array<T.SpawnerTile>();
 
         this.updatedTiles = new Array<T.ITile>();
 
@@ -52,6 +54,7 @@ export class World {
                     break;
                 case 38:
                     tile = new T.SpawnerTile(x, y);
+                    this.spawns.push(<T.SpawnerTile>tile);
                     break;
                 default:
                     tile = new T.EnvironmentTile(x, y);
@@ -111,11 +114,9 @@ export class World {
             player.update(elapsed);
         }
 
-        // Update tiles
-        for (var i = 0; i < V.Variables.worldWidth; i++) {
-            for (var j = 0; j < V.Variables.worldHeight; j++) {
-                this.world.getItem(i, j).update(elapsed);
-            }
+        // Update spawners
+        for (var i = 0; i < this.spawns.length; i++) {
+            this.spawns[i].update(elapsed);
         }
 
         var pilgrimToDelete = new Array<Pil.Pilgrim>();
@@ -128,8 +129,8 @@ export class World {
             if (pilgrim.isDead()) {
                 pilgrimToDelete.push(pilgrim);
             }
-
         }
+
         // Delete dead pilgrim
         for (var i = 0; i < pilgrimToDelete.length; i++) {
             var pilgrim = pilgrimToDelete[i];

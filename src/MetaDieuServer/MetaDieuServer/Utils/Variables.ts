@@ -17,9 +17,9 @@
     public static get humidityCost(): number { return 0; }
     public static get elevationCost(): number { return 0; }
     public static get whirlwindCost(): number { return 0; }
-    public static get humidityCoolDown(): number { return 1000; }
-    public static get elevationCoolDown(): number { return 1000; }
-    public static get whirlwindCoolDown(): number { return 1000; }
+    public static get humidityCoolDown(): number { return 100; }
+    public static get elevationCoolDown(): number { return 100; }
+    public static get whirlwindCoolDown(): number { return 100; }
     public static get defaultFaith(): number { return 0; } 
     public static get timeBeforeKill(): number { return 1000; }
     public static get maxPilgrimSpawn(): number { return 80; }
