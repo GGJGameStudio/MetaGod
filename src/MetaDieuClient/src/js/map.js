@@ -35,10 +35,12 @@ function initMap(tiles){
             client.ground.add(t2);
         }
     }
-
-    for (var i = 0 ; i < client.mapWidth ; i++){
-        for (var j = 0 ; j < client.mapHeight ; j++){
-            drawBorders(i, j);
+    
+    if (client.tileMargin != 0){
+        for (var i = 0 ; i < client.mapWidth ; i++){
+            for (var j = 0 ; j < client.mapHeight ; j++){
+                drawBorders(i, j);
+            }
         }
     }
 
@@ -77,18 +79,20 @@ function updateMap(tiles){
         }
     }
 
-    var w = client.mapWidth;
-    var h = client.mapHeight;
-    for (var t = 0 ; t < tiles.length ; t++){
-        i = tiles[t].coordinate.x;
-        j = tiles[t].coordinate.y;
+    if (client.tileMargin != 0){
+        var w = client.mapWidth;
+        var h = client.mapHeight;
+        for (var t = 0 ; t < tiles.length ; t++){
+            i = tiles[t].coordinate.x;
+            j = tiles[t].coordinate.y;
 
 
-        drawBorders(i, j);
-        drawBorders((((i + 1)%w)+w)%w, j);
-        drawBorders(i, (((j + 1)%h)+h)%h);
-        drawBorders((((i - 1)%w)+w)%w, j);
-        drawBorders(i, (((j - 1)%h)+h)%h);
+            drawBorders(i, j);
+            drawBorders((((i + 1)%w)+w)%w, j);
+            drawBorders(i, (((j + 1)%h)+h)%h);
+            drawBorders((((i - 1)%w)+w)%w, j);
+            drawBorders(i, (((j - 1)%h)+h)%h);
+        }
     }
 }
 

@@ -18,7 +18,7 @@ var client = {
     mapHeight : 40,
     tileWidth : 64,
     tileHeight : 64,
-    tileMargin : 12,
+    tileMargin : 0,
     scaleX : 0.5,
     scaleY : 0.5,
     tiles : [],
@@ -82,29 +82,6 @@ var serverip;
  
 window.onload = function() {
     
-    serverip = window.prompt('Server ip');
-    //serverip = "192.168.13.31";
-    //serverip = "localhost";
-    if (serverip != null && serverip.length == 0) {
-        exitApplication();
-    }
-
-    playerName = window.prompt('Player name');
-    if (playerName != null && playerName.length == 0) {
-        exitApplication();
-    }
-
-    socket = io('http://'+ serverip +':1337');
-    socket.on('acquittal', function(data) {
-        playerId = data;
-
-        var data = {
-            command : 'LoginCommand',
-            login : playerName
-        }
-        socket.emit('update', data );
-    });
-    
     game = new Phaser.Game(client.windowWidth, client.windowHeight, Phaser.WEBGL, '', { 
         preload: preload, 
         create: create, 
@@ -130,10 +107,10 @@ window.onload = function() {
     
     function create () {
         
-        initClient();
-
         initSocket();
         
+        initClient();
+
         initIhm();
         
         initInput();
@@ -184,11 +161,11 @@ window.onload = function() {
         }
         
         // opti
-        /*var screenx = Math.floor((client.windowWidth / 2 - client.objects.x) / (client.tileWidth * client.scaleX));
-        var screeny = Math.floor((client.windowHeight / 2 - client.objects.y) / (client.tileWidth * client.scaleY));
+        /*var screenx = Math.floor((client.windowWidth / 2 - client.objects.x) / (client.tileWidth + client.tileMargin) * client.scaleX));
+        var screeny = Math.floor((client.windowHeight / 2 - client.objects.y) / (client.tileWidth + client.tileMargin) * client.scaleY));
         
-        var nbTileWidthVisible = client.windowWidth / (client.tileWidth * client.scaleX);
-        var nbTileHeightVisible = client.windowHeight / (client.tileHeight * client.scaleY);
+        var nbTileWidthVisible = client.windowWidth / ((client.tileWidth + client.tileMargin) * client.scaleX);
+        var nbTileHeightVisible = client.windowHeight / ((client.tileHeight + client.tileMargin) * client.scaleY);
         
         if (client.tiles[0] != null){
             for (var i = 0 ; i < client.mapWidth ; i++){
@@ -234,6 +211,21 @@ function initClient(){
 
 function initSocket() {
     
+    
+    serverip = window.prompt('Server ip');
+    //serverip = "192.168.13.31";
+    //serverip = "localhost";
+    if (serverip != null && serverip.length == 0) {
+        exitApplication();
+    }
+
+    playerName = window.prompt('Player name');
+    if (playerName != null && playerName.length == 0) {
+        exitApplication();
+    }
+
+    socket = io('http://'+ serverip +':1337');
+    
     socket.on('status', function(data) {
         if (client.init) {
             //console.log(data);
@@ -262,5 +254,16 @@ function initSocket() {
         initPilgrims(data.pilgrims);
 
         client.init = true;
+    });
+    
+    
+    socket.on('acquittal', function(data) {
+        playerId = data;
+
+        var data = {
+            command : 'LoginCommand',
+            login : playerName
+        }
+        socket.emit('update', data );
     });
 }
