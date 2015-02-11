@@ -7,31 +7,6 @@ function exitApplication () {
     gui.App.quit();
 }
 
-var playerName;
-var playerId;
-var serverip = window.prompt('Server ip');
-//var serverip = "192.168.13.31";
-//var serverip = "localhost";
-if (serverip.length == 0) {
-    exitApplication();
-}
-
-var playerName = window.prompt('Player name');
-if (playerName.length == 0) {
-    exitApplication();
-}
-
-var socket = io('http://'+ serverip +':1337');
-socket.on('acquittal', function(data) {
-    playerId = data;
-    
-    var data = {
-        command : 'LoginCommand',
-        login : playerName
-    }
-    socket.emit('update', data );
-});
-
 var client = {
     playerName : "",
     playerId : "",
@@ -99,11 +74,38 @@ var client = {
 };
 
 var game;
+var playerId;
+var playerName;
+var socket;
+var serverip;
 
  
 window.onload = function() {
     
-    game = new Phaser.Game(client.windowWidth, client.windowHeight, Phaser.AUTO, '', { 
+    serverip = window.prompt('Server ip');
+    //serverip = "192.168.13.31";
+    //serverip = "localhost";
+    if (serverip != null && serverip.length == 0) {
+        exitApplication();
+    }
+
+    playerName = window.prompt('Player name');
+    if (playerName != null && playerName.length == 0) {
+        exitApplication();
+    }
+
+    socket = io('http://'+ serverip +':1337');
+    socket.on('acquittal', function(data) {
+        playerId = data;
+
+        var data = {
+            command : 'LoginCommand',
+            login : playerName
+        }
+        socket.emit('update', data );
+    });
+    
+    game = new Phaser.Game(client.windowWidth, client.windowHeight, Phaser.WEBGL, '', { 
         preload: preload, 
         create: create, 
         update: update

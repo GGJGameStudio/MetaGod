@@ -19,6 +19,10 @@ function initIhm(){
     /*client.ihm1.input.onInputDown.add(skill1);
     client.ihm2.input.onInputDown.add(skill2);
     client.ihm3.input.onInputDown.add(skill3);*/
+    
+    client.ihm1.events.onInputDown.add(skill1, this);
+    console.log(client.ihm1);
+    console.log(client.ihm2);
 
     client.ihmGroup.add(client.ihm);
     client.ihmGroup.add(client.ihm1);
@@ -34,11 +38,11 @@ function faithScoreText(players){
         var maxnamelength = 15;
         text += player.username;
         var namelength = (player.username + "").length;
-        for(var i = namelength; i < maxnamelength ; i++) text += " ";
+        for(var j = namelength; j < maxnamelength ; j++) text += " ";
         text += "  ";
         var maxscorelength = 6;
         var scorelength = (player.faithScore + "").length;
-        for(var i = scorelength; i < maxscorelength ; i++) text += " ";
+        for(var j = scorelength; j < maxscorelength ; j++) text += " ";
         text += player.faithScore;
         text += "\n"
     }
